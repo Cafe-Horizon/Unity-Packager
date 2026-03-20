@@ -162,7 +162,14 @@ proc main() =
       
     writeFile(guidDir / "pathname", finalPath & "\n")
 
-  createTarball(tempArchDir, tempTarball)
+  if targetGuids.len == 0:
+    echo "No assets found to package."
+    quit(0)
+
+  let tarball = Tarball()
+  for guid in targetGuids:
+    tarball.addDir(tempArchDir / guid)
+  tarball.writeTarball(tempTarball)
   moveFile(tempTarball, outputFile)
 
 main()

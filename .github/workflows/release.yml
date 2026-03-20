@@ -45,9 +45,31 @@ jobs:
 
       - name: Setup MSVC
         if: matrix.target_os == 'windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: ${{ matrix.msvc_arch }}
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            $installPath = & $vswhere -latest -products * -property installationPath
+          }
+          $vcvarsall = Join-Path $installPath "VC\Auxiliary\Build\vcvarsall.bat"
+          $arch = "${{ matrix.msvc_arch }}"
+          $envFile = [IO.Path]::GetTempFileName()
+          cmd /c "`"$vcvarsall`" $arch && set > `"$envFile`""
+          Get-Content $envFile | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') {
+              $name = $Matches[1]
+              $value = $Matches[2]
+              if ($name -ieq "PATH") {
+                $value.Split(';') | ForEach-Object {
+                  if ($_) { Add-Content $env:GITHUB_PATH $_ }
+                }
+              } elseif ($name -match '^(INCLUDE|LIB|LIBPATH)$') {
+                Add-Content $env:GITHUB_ENV "$name=$value"
+              }
+            }
+          }
+          Remove-Item $envFile
 
       - name: Setup musl-tools (Linux)
         if: matrix.target_os == 'linux'

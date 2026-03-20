@@ -88,6 +88,10 @@ proc main() =
   outputFile = absolutePath(outputFile)
   
   let tempArchDir = getTempDir() / ("unitypackager_" & $getTime().toUnix())
+  let tempTarball = tempArchDir & ".tar.gz"
+  defer:
+    if fileExists(tempTarball): removeFile(tempTarball)
+    if dirExists(tempArchDir): removeDir(tempArchDir)
   createDir(tempArchDir)
   
   var targetGuids = initHashSet[string]()
@@ -158,7 +162,7 @@ proc main() =
       
     writeFile(guidDir / "pathname", finalPath & "\n")
 
-  createTarball(tempArchDir, outputFile)
-  removeDir(tempArchDir)
+  createTarball(tempArchDir, tempTarball)
+  moveFile(tempTarball, outputFile)
 
 main()

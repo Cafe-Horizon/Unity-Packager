@@ -46,6 +46,8 @@ jobs:
       - name: Setup MSVC
         if: matrix.target_os == 'windows'
         shell: pwsh
+        env:
+          MSVC_ARCH: ${{ matrix.msvc_arch }}
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
@@ -53,7 +55,7 @@ jobs:
             $installPath = & $vswhere -latest -products * -property installationPath
           }
           $vcvarsall = Join-Path $installPath "VC\Auxiliary\Build\vcvarsall.bat"
-          $arch = "${{ matrix.msvc_arch }}"
+          $arch = "$env:MSVC_ARCH"
           $envFile = [IO.Path]::GetTempFileName()
           cmd /c "`"$vcvarsall`" $arch && set > `"$envFile`""
           Get-Content $envFile | ForEach-Object {
@@ -81,7 +83,9 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.target_os == 'windows'
-        run: nimble build -y -d:release --cc:vcc --cpu:${{ matrix.arch }}
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: nimble build -y -d:release --cc:vcc --cpu:"$ARCH"
 
       - name: Rename binary (Linux)
         if: matrix.target_os == 'linux'
@@ -112,10 +116,13 @@ jobs:
           merge-multiple: true
 
       - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/*
-          generate_release_notes: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG_NAME" -- ./artifacts/* --generate-notes
+
 
   docker:
     name: Build and Push Docker Image by Architecture
@@ -168,9 +175,11 @@ jobs:
           file: Dockerfile
 
       - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
+          digest="$DIGEST"
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest

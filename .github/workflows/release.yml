@@ -121,7 +121,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG_NAME" -- ./artifacts/* --generate-notes
+          gh release create "$TAG_NAME" --generate-notes -- ./artifacts/*
 
 
   docker:

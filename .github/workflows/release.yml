@@ -85,7 +85,7 @@ jobs:
         if: matrix.target_os == 'windows'
         env:
           ARCH: ${{ matrix.arch }}
-        run: nimble build -y -d:release --cc:vcc --cpu:"$ARCH"
+        run: nimble build -y -d:release --cc:vcc --cpu:"$env:ARCH"
 
       - name: Rename binary (Linux)
         if: matrix.target_os == 'linux'

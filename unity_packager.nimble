@@ -1,5 +1,5 @@
 # Package
-version       = "1.0.5"
+version       = "1.0.6"
 author        = "Marumasa"
 description   = "UnityPackage generator CLI tool without Unity Editor"
 license       = "MIT"

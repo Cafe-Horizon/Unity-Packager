@@ -1,5 +1,5 @@
 import std/[os, strutils, times, parseopt, tables, sets]
-import zippy/tarballs
+import zippy, zippy/tarballs
 
 proc getGuid(metaPath: string): string =
   try:
@@ -88,9 +88,9 @@ proc main() =
   outputFile = absolutePath(outputFile)
   
   let tempArchDir = getTempDir() / ("unitypackager_" & $getTime().toUnix())
-  let tempTarball = tempArchDir & ".tar.gz"
+  let tempTarFile = tempArchDir & ".tar"
   defer:
-    if fileExists(tempTarball): removeFile(tempTarball)
+    if fileExists(tempTarFile): removeFile(tempTarFile)
     if dirExists(tempArchDir): removeDir(tempArchDir)
   createDir(tempArchDir)
   
@@ -169,7 +169,31 @@ proc main() =
   let tarball = Tarball()
   for guid in targetGuids:
     tarball.addDir(tempArchDir / guid)
-  tarball.writeTarball(tempTarball)
-  moveFile(tempTarball, outputFile)
+  tarball.writeTarball(tempTarFile)
+  
+  let tarData = readFile(tempTarFile)
+  let gzData = compress(tarData, BestCompression, dfGzip)
+  var finalData = gzData[0..2]
+  var flg = cast[uint8](gzData[3])
+  
+  var pos = 10
+  if (flg and 0x04) != 0:
+    let xlen = cast[int](gzData[pos]) or (cast[int](gzData[pos+1]) shl 8)
+    pos += 2 + xlen
+  if (flg and 0x08) != 0:
+    while gzData[pos] != '\0': pos += 1
+    pos += 1
+  if (flg and 0x10) != 0:
+    while gzData[pos] != '\0': pos += 1
+    pos += 1
+  if (flg and 0x02) != 0:
+    pos += 2
+    
+  flg = flg or 0x08
+  finalData.add cast[char](flg)
+  finalData.add gzData[4..9]
+  finalData.add "archtemp.tar\0"
+  finalData.add gzData[pos..^1]
+  writeFile(outputFile, finalData)
 
 main()

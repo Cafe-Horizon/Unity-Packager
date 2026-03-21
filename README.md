@@ -11,3 +11,7 @@ unity_packager [options] <inputDir> <outputFile.unitypackage>
 ### オプション
 
 - `-d`, `--dependencies[=true|false]`: 依存関係を含めるか指定（デフォルト: false）
+
+## Docker イメージ
+
+本プロジェクトの Docker イメージは、ベースイメージとして [Horiz-OS](https://github.com/Cafe-Horizon/Horiz-OS) を採用しています。

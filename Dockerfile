@@ -1,4 +1,4 @@
-FROM nimlang/nim:latest AS builder
+FROM nimlang/nim:alpine AS builder
 
 RUN apk add --no-cache musl-dev gcc
 

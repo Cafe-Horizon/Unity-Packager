@@ -126,7 +126,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG_NAME" --generate-notes -- ./artifacts/*
+          gh release create "$TAG_NAME" --generate-notes
+          gh release upload "$TAG_NAME" ./artifacts/*
 
   docker:
     name: Build and Push Docker Image by Architecture

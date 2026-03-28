@@ -128,10 +128,8 @@ jobs:
         run: |
           gh release create "$TAG_NAME" --generate-notes -- ./artifacts/*
 
-
   docker:
     name: Build and Push Docker Image by Architecture
-    needs: build
     strategy:
       matrix:
         include:
@@ -146,16 +144,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Download binary artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: unity_packager-linux-${{ matrix.arch }}
-          path: bin
-
-      - name: Prepare binary for Docker
-        run: |
-          chmod +x bin/unity_packager-linux-${{ matrix.arch }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
